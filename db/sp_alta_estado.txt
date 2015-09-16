@@ -1,0 +1,22 @@
+create or alter procedure SP_ALTA_ESTADO (
+    P_ESTADO_SOFT varchar(20))
+returns (
+    P_MENSAJE varchar(100),
+    P_BANDERA char(1))
+as
+declare variable P_ID integer;
+begin
+  p_bandera = 'S';
+  if (:p_estado_soft is null or (:p_estado_soft = '') ) then
+  begin
+    p_bandera = 'N';
+    p_mensaje = 'Debe ingresar el estado que desea crear.';
+  end
+  else
+  begin
+    p_id = 1 + (select coalesce(max("Estado_Soft"."Id"),0) from "Estado_Soft");
+    insert into "Estado_Soft" values (:p_id, :p_estado_soft);
+    p_mensaje = 'Estado "' || :p_estado_soft || '" agregado correctamente.';
+  end
+  suspend;
+end

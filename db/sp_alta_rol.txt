@@ -1,0 +1,22 @@
+create or alter procedure SP_ALTA_ROL (
+    P_ROL varchar(20))
+returns (
+    P_MENSAJE varchar(100),
+    P_BANDERA char(1))
+as
+declare variable P_ID integer;
+begin
+  p_bandera = 'S';
+  if (:p_rol is null or (:p_rol = '') ) then
+  begin
+    p_bandera = 'N';
+    p_mensaje = 'Debe ingresar el rol que desea crear.';
+  end
+  else
+  begin
+    p_id = 1 + (select coalesce(max("Rol"."Id"),0) from "Rol");
+    insert into "Rol" values (:p_id, :p_rol);
+    p_mensaje = 'Rol "' || :p_rol || '" agregado correctamente.';
+  end
+  suspend;
+end
