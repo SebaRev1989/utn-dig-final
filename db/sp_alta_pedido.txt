@@ -1,0 +1,56 @@
+create or alter procedure SP_ALTA_PEDIDO (
+    P_USUARIO_SOLICITUD varchar(20),
+    P_FECHA_SOLICITUD date,
+    P_DESCRIPCION blob sub_type 1 segment size 1000)
+returns (
+    P_MENSAJE varchar(100),
+    P_BANDERA char(1))
+as
+declare variable P_ID integer;
+declare variable P_ID_PERSONA_SOLIC integer;
+begin
+  p_bandera = 'S';
+
+  /* Verifico los parametros. */
+  if (:p_usuario_solicitud is null or (:p_usuario_solicitud = '') ) then
+  begin
+    p_mensaje = 'El pedido debe ser generado por una persona.';
+    p_bandera = 'N';
+  end
+  else
+  begin
+    /* Veo si existe el ID_PERSONA y lo guardo. */
+    p_id_persona_solic = (select persona.id from persona
+        where (persona.usuario = :p_usuario_solicitud));
+    if (:p_id_persona_solic is null or (:p_id_persona_solic = 0) ) then
+    begin
+      p_mensaje = 'Usuario erroneo o inexistente.';
+      p_bandera = 'N';
+    end
+  end
+
+  if (:p_fecha_solicitud is null) then
+  begin
+    p_mensaje = 'Debe seleccionar la fecha de pedido.';
+    p_bandera = 'N';
+  end
+
+  if (:p_descripcion is null or (:p_descripcion = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar la descripcion del pedido.';
+    p_bandera = 'N';
+  end
+
+  if (:p_bandera = 'S') then
+  begin
+    /* Calculo el ID y agrego el registro. */
+    p_id = 1 + (select coalesce(max(pedido.id),0) from pedido);
+
+    insert into pedido (pedido.id, pedido.id_persona_solic, pedido.fecha_solicitud,
+        pedido.descripcion) values (:p_id, :p_id_persona_solic, :p_fecha_solicitud,
+        :p_descripcion);
+
+    p_mensaje = 'Pedido registrado correctamente.';
+  end
+  suspend;
+end

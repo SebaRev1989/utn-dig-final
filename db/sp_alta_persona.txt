@@ -1,0 +1,53 @@
+create or alter procedure SP_ALTA_PERSONA (
+    P_APELLIDO varchar(30),
+    P_NOMBRE varchar(30),
+    P_ROL varchar(20),
+    P_CONTACTO varchar(100))
+returns (
+    P_MENSAJE varchar(100),
+    P_BANDERA char(1))
+as
+declare variable P_ID integer;
+declare variable P_ID_ROL integer;
+begin
+  p_bandera = 'S';
+
+  if (:p_apellido is null or (:p_apellido = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar el apellido de la persona.';
+    p_bandera = 'N';
+  end
+  if (:p_nombre is null or (:p_nombre = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar el nombre de la persona.';
+    p_bandera = 'N';
+  end
+  if (:p_rol is null or (:p_rol = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar el rol de la persona.';
+    p_bandera = 'N';
+  end
+  else
+  begin
+    p_id_rol = (select "Rol"."Id" from "Rol" where ("Rol"."Rol" = :p_rol));
+    if (:p_id_rol is null or (:p_id_rol = 0) ) then
+    begin
+      p_mensaje = 'Rol no valido o inexistente.';
+      p_bandera = 'N';
+    end
+  end
+
+  if (:p_bandera = 'S') then
+  begin
+    p_id = 1 + (select coalesce(max("Persona"."Id"),0) from "Persona");
+    insert into "Persona" ("Persona"."Id", "Persona"."Id_Rol", "Persona"."Apellido",
+        "Persona"."Nombre") values (:p_id, :p_id_rol, :p_apellido, :p_nombre);
+
+    if (:p_contacto is not null or (:p_contacto <> '') )
+    then update "Persona" set "Persona"."Contacto" = :p_contacto
+            where "Persona"."Id" = :p_id;
+
+    p_mensaje = '"' || :p_apellido || ', ' || :p_nombre || '" agregado correctamente.';
+  end
+  suspend;
+end

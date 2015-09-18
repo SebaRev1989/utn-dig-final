@@ -66,8 +66,7 @@ CREATE TABLE "Persona"(
     "Apellido"    VARCHAR(30)     NOT NULL,
     "Nombre"      VARCHAR(30)     NOT NULL,
     "Contacto"    VARCHAR(100),
-	"User"		  VARCHAR(20)	  NOT NULL,
-	"Password"	  VARCHAR(20)	  NOT NULL,
+	"Password"	  VARCHAR(20),
     CONSTRAINT PK6 PRIMARY KEY ("Id")
 );
 
