@@ -1,0 +1,51 @@
+create or alter procedure SP_ALTA_FUNCIONALIDAD (
+    P_PROYECTO varchar(30),
+    P_NOMBRE varchar(30),
+    P_DESCRIPCION blob sub_type 1 segment size 1000)
+returns (
+    P_MENSAJE varchar(100),
+    P_BANDERA char(1))
+as
+declare variable P_ID integer;
+declare variable P_ID_PROYECTO integer;
+begin
+  p_bandera = 'S';
+  /* Verifico los parametros. */
+  if (:p_proyecto is null or (:p_proyecto = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar el nombre del proyecto que incluye la funcionalidad.';
+    p_bandera = 'N';
+  end
+  else
+  begin
+    p_id_proyecto = (select proyecto.id from proyecto
+        where (proyecto.nombre = :p_proyecto));
+    if (:p_id_proyecto is null or (:p_id_proyecto = 0) ) then
+    begin
+        p_mensaje = 'Proyecto erroneo o inexistente.';
+        p_bandera = 'N';
+    end
+  end
+
+  if (:p_nombre is null or (:p_nombre = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar el nombre de la funcionalidad.';
+    p_bandera = 'N';
+  end
+
+  if (:p_descripcion is null or (:p_descripcion = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar la descripcion de la funcionalidad.';
+    p_bandera = 'N';
+  end
+
+  if (:p_bandera = 'S') then
+  begin
+    /* Determino el ID y agrego el registro. */
+    p_id = 1 + (select coalesce(max(funcionalidad.id),0) from funcionalidad);
+    insert into funcionalidad values (:p_id, :p_id_proyecto, :p_nombre, :p_descripcion);
+    p_mensaje = 'Funcionalidad "' || :p_nombre || '" agregada correctamente al proyecto "'
+        || :p_proyecto || '".';
+  end
+  suspend;
+end

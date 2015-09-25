@@ -1,0 +1,72 @@
+create or alter procedure SP_ALTA_VERSION_PROY (
+    P_PROYECTO varchar(30),
+    P_VERSION_MAYOR integer,
+    P_FECHA date,
+    P_VERSION_MENOR integer)
+returns (
+    P_MENSAJE varchar(100),
+    P_BANDERA char(1))
+as
+declare variable P_ID integer;
+declare variable P_ID_PROYECTO integer;
+begin
+  p_bandera = 'S';
+  /* Verifico los parametros. */
+  if (:p_proyecto is null or (:p_proyecto = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar el proyecto.';
+    p_bandera = 'N';
+  end
+  else
+  begin
+    p_id_proyecto = (select proyecto.id from proyecto
+        where (proyecto.nombre = :p_proyecto));
+    if (:p_id_proyecto is null or (:p_id_proyecto = 0) ) then
+    begin
+        p_mensaje = 'Proyecto erroneo o inexistente.';
+        p_bandera = 'N';
+    end
+  end
+
+  if (:p_version_mayor is null) then
+  begin
+    p_mensaje = 'Debe ingresar la version mayor del proyecto.  Puede ser 0.';
+    p_bandera = 'N';
+  end
+
+  if (:p_fecha is null) then
+  begin
+    p_mensaje = 'Debe ingresar la fecha de actualizacion.';
+    p_bandera = 'N';
+  end
+  else
+  begin
+    if ((:p_id_proyecto is not null) and
+        (:p_fecha < (select first 1 (version_proy.fecha_actualizacion)
+            from version_proy where(version_proy.id_proyecto = :p_id_proyecto)
+            order by version_proy.id desc)))
+    then
+    begin
+        p_mensaje = 'Fecha de actualizacion menor a la ultima registrada.';
+        p_bandera = 'N';
+    end
+  end
+
+  if (:p_bandera = 'S') then
+  begin
+    /* Calculo el ID y agrego el registro. */
+    p_id = 1 + (select coalesce(max(version_proy.id),0) from version_proy);
+    insert into version_proy (version_proy.id, version_proy.id_proyecto,
+        version_proy.version_mayor, version_proy.fecha_actualizacion) values
+        (:p_id, :p_id_proyecto, :p_version_mayor, :p_fecha);
+
+    if (:p_version_menor is not null) then
+    begin
+        update version_proy set version_proy.version_menor = :p_version_menor
+            where version_proy.id = :p_id;
+    end
+
+    p_mensaje = 'Version del proyecto "' || :p_proyecto || '" actualizada correctamente.';
+  end
+  suspend;
+end

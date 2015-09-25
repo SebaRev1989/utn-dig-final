@@ -1,0 +1,79 @@
+create or alter procedure SP_ALTA_PROYECTO (
+    P_USUARIO varchar(20),
+    P_ESTADO_SOFT varchar(20),
+    P_NOMBRE varchar(30),
+    P_DESCRIPCION blob sub_type 1 segment size 1000,
+    P_FECHA_INICIO date)
+returns (
+    P_MENSAJE varchar(100),
+    P_BANDERA char(1))
+as
+declare variable P_ID integer;
+declare variable P_ID_PERSONA integer;
+declare variable P_ID_ESTADO_SOFT integer;
+begin
+  p_bandera = 'S';
+  /* Verifico los parametros. */
+  if (:p_usuario is null or (:p_usuario = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar un usuario.';
+    p_bandera = 'N';
+  end
+  else
+  begin
+    p_id_persona = (select persona.id from persona where
+        (persona.usuario = :p_usuario));
+    if (:p_id_persona is null or (:p_id_persona = 0) ) then
+    begin
+        p_mensaje = 'Usuario gestor del proeycto erroneo o inexixtente.';
+        p_bandera = 'N';
+    end
+  end
+
+  if (:p_estado_soft is null or (:p_estado_soft = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar el estado del proyecto.';
+    p_bandera = 'N';
+  end
+  else
+  begin
+    p_id_estado_soft = (select estado_soft.id from estado_soft
+        where (estado_soft.estado_soft = :p_estado_soft));
+    if (:p_id_estado_soft is null or (:p_id_estado_soft = 0) ) then
+    begin
+        p_mensaje = 'Estado erroneo o inexistente.';
+        p_bandera = 'N';
+    end
+  end
+
+  if (:p_nombre is null or (:p_nombre = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar el nombre del proyecto.';
+    p_bandera = 'N';
+  end
+
+  if (:p_descripcion is null or (:p_descripcion = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar la descripcion del proyecto.';
+    p_bandera = 'N';
+  end
+
+  if (:p_fecha_inicio is null) then
+  begin
+    p_mensaje = 'Debe ingresar la fecha de inicio.';
+    p_bandera = 'N';
+  end
+
+  if (:p_bandera = 'S') then
+  begin
+    /* Calculo el ID y agrego el registro .*/
+    p_id = 1 + (select coalesce(max(proyecto.id),0) from proyecto);
+    insert into proyecto (proyecto.id, proyecto.id_persona, proyecto.id_estado_soft,
+        proyecto.nombre, proyecto.descripcion, proyecto.fecha_inicio) values
+        (:p_id, :p_id_persona, :p_id_estado_soft, :p_nombre, :p_descripcion,
+        :p_fecha_inicio);
+
+    p_mensaje = 'Proyecto "' || :p_nombre || '" registrado correctamente.';
+  end
+  suspend;
+end

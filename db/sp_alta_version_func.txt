@@ -1,0 +1,117 @@
+create or alter procedure SP_ALTA_VERSION_FUNC (
+    P_FUNCIONALIDAD varchar(30),
+    P_PROYECTO varchar(30),
+    P_USUARIO varchar(20),
+    P_ESTADO_SOFT varchar(20),
+    P_FECHA_INICO date,
+    P_FECHA_FIN_PROB date,
+    P_DESCRIPCION blob sub_type 1 segment size 1000)
+returns (
+    P_MENSAJE varchar(100),
+    P_BANDERA char(1))
+as
+declare variable P_ID integer;
+declare variable P_ID_FUNCIONALIDAD integer;
+declare variable P_ID_PROYECTO integer;
+declare variable P_ID_PERSONA integer;
+declare variable P_ID_ESTADO_SOFT integer;
+begin
+  p_bandera = 'S';
+  /* Verifico los parametros. */
+  if (:p_funcionalidad is null or (:p_funcionalidad = '') ) then
+  begin
+    p_mensaje = 'Debe indicar la funcionalidad.';
+    p_bandera = 'N';
+  end
+  else
+  begin
+    p_id_funcionalidad = (select funcionalidad.id from funcionalidad
+        where (funcionalidad.nombre = :p_funcionalidad));
+    if (:p_id_funcionalidad is null or (:p_id_funcionalidad = 0) ) then
+    begin
+        p_mensaje = 'Funcionalidad erronea o inexistente';
+        p_bandera = 'N';
+    end
+  end
+
+  if (:p_proyecto is null or (:p_proyecto = '') ) then
+  begin
+    p_mensaje = 'Debe indicar la proyecto.';
+    p_bandera = 'N';
+  end
+  else
+  begin
+    p_id_proyecto = (select proyecto.id from proyecto
+        where (proyecto.nombre = :p_proyecto));
+    if (:p_id_proyecto is null or (:p_id_proyecto = 0) ) then
+    begin
+        p_mensaje = 'Proyecto erroneo o inexistente';
+        p_bandera = 'N';
+    end
+  end
+
+  if (:p_usuario is null or (:p_usuario = '') ) then
+  begin
+    p_mensaje = 'Debe indicar el usuario a quien se le asignara el desarrollo.';
+    p_bandera = 'N';
+  end
+  else
+  begin
+    p_id_persona = (select persona.id from persona
+        where (persona.usuario = :p_usuario));
+    if (:p_id_persona is null or (:p_id_persona = 0) ) then
+    begin
+        p_mensaje = 'Usuario erroneo o inexistente';
+        p_bandera = 'N';
+    end
+  end
+
+  if (:p_estado_soft is null or (:p_estado_soft = '') ) then
+  begin
+    p_mensaje = 'Debe indicar el estado del desarrollo.';
+    p_bandera = 'N';
+  end
+  else
+  begin
+    p_id_estado_soft = (select estado_soft.id from estado_soft
+        where (estado_soft.estado_soft = :p_estado_soft));
+    if (:p_id_estado_soft is null or (:p_id_estado_soft = 0) ) then
+    begin
+        p_mensaje = 'Estado de software erroneo o inexistente';
+        p_bandera = 'N';
+    end
+  end
+
+  if (:p_fecha_inico is null) then
+  begin
+    p_mensaje = 'Debe ingresar la fecha de inicio.';
+    p_bandera = 'N';
+  end
+
+  if (:p_descripcion is null or (:p_descripcion = '') ) then
+  begin
+    p_mensaje = 'Debe ingresar la descripcion.';
+    p_bandera = 'N';
+  end
+
+  if (:p_bandera = 'S') then
+  begin
+    /* Calculo el ID y agrego el registro. */
+    p_id = 1 + (select coalesce(max(version_func.id),0) from version_func);
+
+    insert into version_func (version_func.id, version_func.id_funcionalidad,
+        version_func.id_proyecto, version_func.id_persona, version_func.id_estado_soft,
+        version_func.fecha_inicio, version_func.descripcion) values
+        (:p_id, :p_id_funcionalidad, :p_id_proyecto, :p_id_persona, :p_id_estado_soft,
+        :p_fecha_inico, :p_descripcion);
+
+    if (:p_fecha_fin_prob is not null) then
+    begin
+        update version_func set version_func.fecha_fin_probable = :p_fecha_fin_prob
+            where version_func.id = :p_id;
+    end
+
+    p_mensaje = 'Version de funcionalidad creada correctamente.';
+  end
+  suspend;
+end
