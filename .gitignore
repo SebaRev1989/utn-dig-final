@@ -2,4 +2,6 @@
 *.local
 *.res
 Win32/
+__history/
+*.identcache
 
