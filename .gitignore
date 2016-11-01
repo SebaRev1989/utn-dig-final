@@ -4,4 +4,7 @@
 Win32/
 __history/
 *.identcache
+*.pdf
+*.docx
+*.stat
 

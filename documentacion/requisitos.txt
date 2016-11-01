@@ -1,0 +1,6 @@
+Una vez desarrollado, hay que capturar las pantallas principales de la aplicación y hacer una descripción de la misma, como un manual de usuario, similar al taller de regularidad.
+
+Para la presentación se  debe incluir en un CD etiquetado:
+- El código fuente del sistema
+- El script SQL de la BD
+- El word de la documentación 
